@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+# Script that displays all active IPv4 IPs on the machine
+
+# Use ip command if available (modern systems)
+if command -v ip >/dev/null 2>&1; then
+    ip -4 addr show | grep -oP '(?<=inet\s)\d+(\.\d+){3}'
+# Fall back to ifconfig if ip command is not available
+elif command -v ifconfig >/dev/null 2>&1; then
+    ifconfig | grep -oP '(?<=inet\s)\d+(\.\d+){3}' | grep -v '127.0.0.1'
+    # Also output localhost IP separately since the previous command excludes it
+    grep -oP '(?<=127\.0\.0\.)\d+' /etc/hosts | head -1 | awk '{print "127.0.0."$1}'
+# Use hostname as a last resort
+else
+    hostname -I | tr ' ' '\n' | grep -E '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$'
+    # Add localhost IP
+    grep -oP '(?<=127\.0\.0\.)\d+' /etc/hosts | head -1 | awk '{print "127.0.0."$1}'
+fi
